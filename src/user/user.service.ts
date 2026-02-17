@@ -1,10 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/user.dto';
+import { CreateUserDto } from './dto/createUser.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { Repository } from 'typeorm';
 import { IUserResponse } from './types/userResponse.interface';
 import { sign } from 'jsonwebtoken';
+import { LoginDto } from './dto/loginUser.dto';
+import { compare } from 'bcryptjs';
 
 @Injectable()
 export class UserService {
@@ -38,6 +40,34 @@ export class UserService {
     const savedUser = await this.userRepository.save(newUser);
 
     return this.generateUserResponse(savedUser);
+  }
+
+  async loginUser(loginUserDto: LoginDto): Promise<UserEntity> {
+    const user = await this.userRepository.findOne({
+      where: {
+        email: loginUserDto.email,
+      },
+    });
+
+    if (!user) {
+      throw new HttpException(
+        'Wrong email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const matchPassword = await compare(loginUserDto.password, user.password as string);
+
+    if (!matchPassword) {
+      throw new HttpException(
+        'Wrong email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    delete user.password
+
+    return user;
   }
 
   generateToken(user: UserEntity): string {

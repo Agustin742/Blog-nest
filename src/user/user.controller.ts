@@ -6,15 +6,28 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/user.dto';
+import { CreateUserDto } from './dto/createUser.dto';
+import { IUserResponse } from './types/userResponse.interface';
+import { LoginDto } from './dto/loginUser.dto';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UsePipes(new ValidationPipe())
   @Post()
-  async createUser(@Body('user') createUserDto: CreateUserDto) {
+  @UsePipes(new ValidationPipe())
+  async createUser(
+    @Body('user') createUserDto: CreateUserDto,
+  ): Promise<IUserResponse> {
     return await this.userService.createuser(createUserDto);
+  }
+
+  @Post('login')
+  @UsePipes(new ValidationPipe())
+  async loginUser(
+    @Body('user') loginUserDto: LoginDto,
+  ): Promise<IUserResponse> {
+    const user = await this.userService.loginUser(loginUserDto);
+    return this.userService.generateUserResponse(user);
   }
 }

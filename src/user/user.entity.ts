@@ -25,7 +25,7 @@ export class UserEntity {
   image!: string;
 
   @Column()
-  password!: string;
+  password?: string;
 
   @BeforeInsert()
   @BeforeUpdate()
