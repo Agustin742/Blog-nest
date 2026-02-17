@@ -7,6 +7,7 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   username: 'devuser',
   password: '1234',
   database: 'blog',
+  schema: 'public',
   autoLoadEntities: true,
   synchronize: true,
 };
