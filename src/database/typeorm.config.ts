@@ -9,5 +9,6 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   database: 'blog',
   schema: 'public',
   autoLoadEntities: true,
-  synchronize: true,
+  migrationsTableName: 'migrations',
+  migrations: [__dirname + '/migrations/**/*.ts'],
 };
