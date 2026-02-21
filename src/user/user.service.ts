@@ -7,6 +7,7 @@ import { IUserResponse } from './types/userResponse.interface';
 import { sign } from 'jsonwebtoken';
 import { LoginDto } from './dto/loginUser.dto';
 import { compare } from 'bcryptjs';
+import { UpdateUserDto } from './dto/updateUserDto';
 
 @Injectable()
 export class UserService {
@@ -71,6 +72,13 @@ export class UserService {
     delete user.password;
 
     return user;
+  }
+
+  async updateUser(userId: number, updateUserDto: UpdateUserDto) {
+    const user = await this.findById(userId);
+    Object.assign(user, updateUserDto);
+
+    return this.userRepository.save(user);
   }
 
   async findById(id: number): Promise<UserEntity> {

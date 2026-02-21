@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Req,
   UseGuards,
   UsePipes,
@@ -15,6 +16,7 @@ import { LoginDto } from './dto/loginUser.dto';
 import type { AuthRequest } from '../types/expressRequest.interface';
 import { User } from './decorator/user.decorator';
 import { AuthGuard } from './guards/user.guard';
+import { UpdateUserDto } from './dto/updateUserDto';
 
 @Controller()
 export class UserController {
@@ -35,6 +37,16 @@ export class UserController {
   ): Promise<IUserResponse> {
     const user = await this.userService.loginUser(loginUserDto);
     return this.userService.generateUserResponse(user);
+  }
+
+  @Put('user')
+  @UseGuards(AuthGuard)
+  async updateUser(
+    @User('id') id: number,
+    @Body('user') updateUserDto: UpdateUserDto,
+  ): Promise<IUserResponse> {
+    const updateUser = await this.userService.updateUser(id, updateUserDto);
+    return this.userService.generateUserResponse(updateUser);
   }
 
   @Get('user')
