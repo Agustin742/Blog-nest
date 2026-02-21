@@ -15,13 +15,13 @@ export class ArticleEntity {
   @Column()
   slug!: string;
 
-  @Column()
+  @Column({ default: '' })
   description!: string;
 
-  @Column()
+  @Column({ default: '' })
   body!: string;
 
-  @Column()
+  @Column({ default: '' })
   title!: string;
 
   @Column('simple-array')
