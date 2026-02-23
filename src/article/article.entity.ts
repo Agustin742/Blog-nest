@@ -3,6 +3,7 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -36,7 +37,11 @@ export class ArticleEntity {
   @Column({ default: 0 })
   favoritesCount!: number;
 
+  @Column()
+  authorId!: number;
+
   @ManyToOne(() => UserEntity, (user) => user.articles)
+  @JoinColumn({ name: 'authorId' })
   author!: UserEntity;
 
   @BeforeUpdate()

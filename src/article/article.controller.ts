@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   UseGuards,
   UsePipes,
@@ -30,5 +31,12 @@ export class ArticleController {
       createArticleDto,
     );
     return this.articleService.generateArticleResponse(newArticle);
+  }
+
+  @Get(':slug')
+  async getArticle(@Param('slug') slug: string): Promise<IArticleResponse> {
+    const article = await this.articleService.getSingleArticle(slug);
+
+    return this.articleService.generateArticleResponse(article);
   }
 }
