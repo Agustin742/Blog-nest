@@ -3,9 +3,11 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import { ArticleEntity } from '../article/article.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -25,7 +27,10 @@ export class UserEntity {
   image!: string;
 
   @Column()
-  password!: string;
+  password?: string;
+
+  @OneToMany(() => ArticleEntity, (article) => article.author)
+  articles!: ArticleEntity[];
 
   @BeforeInsert()
   @BeforeUpdate()
