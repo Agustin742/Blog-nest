@@ -116,6 +116,40 @@ export class ArticleService {
     return currentArticle;
   }
 
+  async removeArticleFromFavorites(
+    currentUserId: number,
+    slug: string,
+  ): Promise<ArticleEntity> {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: currentUserId,
+      },
+      relations: ['favorites'],
+    });
+
+    if (!user) {
+      throw new HttpException(
+        `User whith ID ${currentUserId} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const currentArticle = await this.findBySlug(slug);
+
+    const articleIndex = user.favorites.findIndex(
+      (article) => article.slug === currentArticle.slug,
+    );
+
+    if (articleIndex >= 0) {
+      currentArticle.favoritesCount--;
+      user.favorites.splice(articleIndex, 1);
+      await this.articleRepository.save(currentArticle);
+      await this.userRepository.save(user);
+    }
+
+    return currentArticle;
+  }
+
   async getSingleArticle(slug: string): Promise<ArticleEntity> {
     const article = await this.findBySlug(slug);
 
