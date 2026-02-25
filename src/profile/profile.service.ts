@@ -83,6 +83,28 @@ export class ProfileService {
     return { ...followingProfile, following: true };
   }
 
+  async unfollowProfile(
+    currentUserId: number,
+    followingUsername: string,
+  ): Promise<ProfileType> {
+    const followingProfile = await this.userRepository.findOne({
+      where: {
+        username: followingUsername,
+      },
+    });
+
+    if (!followingProfile) {
+      throw new HttpException('Profile does not exist', HttpStatus.NOT_FOUND);
+    }
+
+    await this.followRepository.delete({
+      followerId: currentUserId,
+      followingId: followingProfile.id,
+    });
+
+    return { ...followingProfile, following: false };
+  }
+
   generateProfileResponse(profile: ProfileType): IProfileResponse {
     delete profile?.password;
     delete profile?.email;
