@@ -3,6 +3,7 @@ import { TagEntitty } from '../tag/tag.entity';
 import { UserEntity } from '../user/user.entity';
 import { DataSource } from 'typeorm';
 import { ArticleEntity } from '../article/article.entity';
+import { FollowEntity } from '../profile/following.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -12,6 +13,6 @@ export const AppDataSource = new DataSource({
   password: '1234',
   database: 'blog',
   schema: 'public',
-  entities: [UserEntity, TagEntitty, ArticleEntity],
+  entities: [UserEntity, TagEntitty, ArticleEntity, FollowEntity],
   migrations: ['src/migrations/**/*.{ts,js}'],
 });
