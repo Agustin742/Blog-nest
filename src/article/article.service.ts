@@ -10,6 +10,7 @@ import { DeleteResult } from 'typeorm/browser';
 import { UpdateArticleDto } from './dto/updateArticle.dto';
 import { IArticlesResponse } from './types/articlesResponse.interface';
 import { ArticleQuery } from './types/articleQuery.interface';
+import { FollowEntity } from 'src/profile/following.entity';
 
 @Injectable()
 export class ArticleService {
@@ -18,6 +19,8 @@ export class ArticleService {
     private readonly articleRepository: Repository<ArticleEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(FollowEntity)
+    private readonly followRepository: Repository<FollowEntity>,
   ) {}
 
   async findAll(
@@ -102,6 +105,45 @@ export class ArticleService {
     });
 
     return { articles: articlesWithFavorited, articlesCount };
+  }
+
+  async getFeed(
+    currentUserId: number,
+    query: ArticleQuery,
+  ): Promise<IArticlesResponse> {
+    const follows = await this.followRepository.find({
+      where: {
+        followerId: currentUserId,
+      },
+    });
+
+    const followingIds = follows.map((user) => user.followingId);
+
+    if (!follows.length) {
+      return { articles: [], articlesCount: 0 };
+    }
+
+    const queryBuilder = this.articleRepository
+      .createQueryBuilder('articles')
+      .leftJoinAndSelect('articles.author', 'author');
+
+    queryBuilder.andWhere('articles.authorId IN (:...followingIds)', {
+      followingIds,
+    });
+
+    const articlesCount = await queryBuilder.getCount();
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    const artilces = await queryBuilder.getMany();
+
+    return { articles: artilces, articlesCount: articlesCount };
   }
 
   async createArticle(

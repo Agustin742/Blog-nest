@@ -39,6 +39,23 @@ export class ArticleController {
     return this.articleService.generateArticleResponse(newArticle);
   }
 
+  @Get()
+  async findAll(
+    @Query() query: ArticleQuery,
+    @User('id') currentUserId: number,
+  ): Promise<IArticlesResponse> {
+    return await this.articleService.findAll(query, currentUserId);
+  }
+
+  @Get('feed')
+  @UseGuards(AuthGuard)
+  async getUserFeed(
+    @User('id') currentUserId: number,
+    @Query() query: ArticleQuery,
+  ): Promise<IArticlesResponse> {
+    return await this.articleService.getFeed(currentUserId, query);
+  }
+
   @Get(':slug')
   async getArticle(@Param('slug') slug: string): Promise<IArticleResponse> {
     const article = await this.articleService.getSingleArticle(slug);
@@ -69,14 +86,6 @@ export class ArticleController {
     );
 
     return this.articleService.generateArticleResponse(updateArticle);
-  }
-
-  @Get()
-  async findAll(
-    @Query() query: ArticleQuery,
-    @User('id') currentUserId: number,
-  ): Promise<IArticlesResponse> {
-    return await this.articleService.findAll(query, currentUserId);
   }
 
   @Post(':slug/favorite')
