@@ -36,6 +36,48 @@ export class CommentService {
     return this.generateCommentResponse(savedComment);
   }
 
+  async getComments(slug: string): Promise<ICommentsResponse> {
+    const article = await this.findArticleBySlug(slug);
+
+    const comments = await this.commentRepository.find({
+      where: { article: { id: article.id } },
+      order: { createdAt: 'DESC' },
+    });
+
+    return this.generateCommentsResponse(comments);
+  }
+
+  async deleteComment(
+    currentUserId: number,
+    slug: string,
+    commentId: number,
+  ): Promise<string> {
+    const article = await this.findArticleBySlug(slug);
+
+    const comment = await this.commentRepository.findOne({
+      where: {
+        id: commentId,
+        article: { id: article.id },
+      },
+      relations: ['author'],
+    });
+
+    if (!comment) {
+      throw new HttpException('Comment not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (comment.author.id !== currentUserId) {
+      throw new HttpException(
+        'You are not the author of this comment',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    await this.commentRepository.remove(comment);
+
+    return 'comment successfully deleted';
+  }
+
   private async findArticleBySlug(slug: string): Promise<ArticleEntity> {
     const article = await this.articleRepository.findOne({
       where: {
@@ -69,7 +111,18 @@ export class CommentService {
 
   generateCommentsResponse(comments: CommentEntity[]): ICommentsResponse {
     return {
-      comments,
+      comments: comments.map((comment) => ({
+        id: comment.id,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        body: comment.body,
+        author: {
+          username: comment.author.username,
+          bio: comment.author.bio,
+          image: comment.author.image,
+          following: false,
+        },
+      })),
     };
   }
 }

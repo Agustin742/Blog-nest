@@ -1,5 +1,5 @@
-import { CommentEntity } from '../comment.entity';
+import { CommentResponse } from './comment.type';
 
 export interface ICommentsResponse {
-  comments: CommentEntity[];
+  comments: CommentResponse[];
 }
