@@ -22,8 +22,11 @@ export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
   @Get(':slug/comments')
-  async getComments(@Param('slug') slug: string): Promise<ICommentsResponse> {
-    const comments = await this.commentService.getComments(slug);
+  async getComments(
+    @Param('slug') slug: string,
+    @User('id') currentUserId: number,
+  ): Promise<ICommentsResponse> {
+    const comments = await this.commentService.getComments(slug, currentUserId);
     return comments;
   }
 

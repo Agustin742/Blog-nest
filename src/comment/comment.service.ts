@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { flatten, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/user/user.entity';
 import { CreateCommentDto } from './dto/createComment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { ArticleEntity } from 'src/article/article.entity';
 import { ICommentsResponse } from './types/commentsResponse.interface';
 import { ICommentResponse } from './types/commentResponse.interface';
+import { FollowEntity } from 'src/profile/following.entity';
 
 @Injectable()
 export class CommentService {
@@ -15,6 +16,8 @@ export class CommentService {
     private readonly commentRepository: Repository<CommentEntity>,
     @InjectRepository(ArticleEntity)
     private readonly articleRepository: Repository<ArticleEntity>,
+    @InjectRepository(FollowEntity)
+    private readonly followRepository: Repository<FollowEntity>,
   ) {}
 
   async createComment(
@@ -33,10 +36,24 @@ export class CommentService {
 
     const savedComment = await this.commentRepository.save(comment);
 
-    return this.generateCommentResponse(savedComment);
+    let isFollowed = false;
+
+    const follow = await this.followRepository.findOne({
+      where: {
+        followerId: user.id,
+        followingId: article.authorId,
+      },
+    });
+
+    isFollowed = Boolean(follow);
+
+    return this.generateCommentResponse(savedComment, isFollowed);
   }
 
-  async getComments(slug: string): Promise<ICommentsResponse> {
+  async getComments(
+    slug: string,
+    currentUserId: number,
+  ): Promise<ICommentsResponse> {
     const article = await this.findArticleBySlug(slug);
 
     const comments = await this.commentRepository.find({
@@ -44,7 +61,20 @@ export class CommentService {
       order: { createdAt: 'DESC' },
     });
 
-    return this.generateCommentsResponse(comments);
+    let isFollowed = false;
+
+    if (currentUserId) {
+      const follow = await this.followRepository.findOne({
+        where: {
+          followerId: currentUserId,
+          followingId: article.authorId,
+        },
+      });
+
+      isFollowed = Boolean(follow);
+    }
+
+    return this.generateCommentsResponse(comments, isFollowed);
   }
 
   async deleteComment(
@@ -92,7 +122,10 @@ export class CommentService {
     return article;
   }
 
-  generateCommentResponse(comment: CommentEntity): ICommentResponse {
+  generateCommentResponse(
+    comment: CommentEntity,
+    isFollowed: boolean,
+  ): ICommentResponse {
     return {
       comment: {
         id: comment.id,
@@ -103,26 +136,29 @@ export class CommentService {
           username: comment.author.username,
           bio: comment.author.bio,
           image: comment.author.image,
-          following: false,
+          following: isFollowed,
         },
       },
     };
   }
 
-  generateCommentsResponse(comments: CommentEntity[]): ICommentsResponse {
-    return {
-      comments: comments.map((comment) => ({
-        id: comment.id,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
-        body: comment.body,
-        author: {
-          username: comment.author.username,
-          bio: comment.author.bio,
-          image: comment.author.image,
-          following: false,
-        },
-      })),
-    };
+  generateCommentsResponse(
+    comments: CommentEntity[],
+    isFollowed: boolean,
+  ): ICommentsResponse {
+    const formatedComments = comments.map((comment) => ({
+      id: comment.id,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+      body: comment.body,
+      author: {
+        username: comment.author.username,
+        bio: comment.author.bio,
+        image: comment.author.image,
+        following: isFollowed,
+      },
+    }));
+
+    return { comments: formatedComments };
   }
 }
